@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "727970360884",
+    "project_id": "pmobakhir-1279e",
+    "storage_bucket": "pmobakhir-1279e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:727970360884:android:345f6572627f67f6aa2461",
+        "android_client_info": {
+          "package_name": "com.pmob.expensestracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBELEcrPTujftlZ_VK91ueelDxAAF5NlMk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
