@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "727970360884",
+    "firebase_url": "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "pmobakhir-1279e",
     "storage_bucket": "pmobakhir-1279e.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.pmob.expensestracker"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "727970360884-sm15ple6u8dgnsv6bcepvuhcbo6cg98g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pmob.expensestracker",
+            "certificate_hash": "7321091259cb24eafebdb79b8b22bfb598e99817"
+          }
+        },
+        {
+          "client_id": "727970360884-4ig6ne8esiru2drvrklm98nrj98qjsj1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBELEcrPTujftlZ_VK91ueelDxAAF5NlMk"
@@ -20,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "727970360884-4ig6ne8esiru2drvrklm98nrj98qjsj1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

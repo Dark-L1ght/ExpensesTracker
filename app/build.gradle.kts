@@ -12,7 +12,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.pmob.expencestracker"
+        applicationId = "com.pmob.expensestracker"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -58,25 +58,19 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
-    implementation("com.google.firebase:firebase-analytics")
-
-    // Tambahkan Realtime Database
-    implementation("com.google.firebase:firebase-database-ktx")
-
-    // Tambahkan Firebase Auth (untuk Google Login)
-    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.database)
 
     // Navigation Component (Untuk Bottom Nav)
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
     // Chart (Untuk Visualisasi Data)
-    implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
+    implementation(libs.mpandroidchart)
 
 
     // UI pendukung
-    implementation("com.google.android.material:material:1.11.0")
-
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation(libs.material)
+    implementation(libs.play.services.auth)
 }
