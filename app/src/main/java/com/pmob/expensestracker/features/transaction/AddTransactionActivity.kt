@@ -151,18 +151,27 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun collectInputData(): Transaction? {
-        val amount = binding.etAmount.text.toString()
-        if (amount.isEmpty()) return null
+        // 1. Get the text
+        val rawAmount = binding.etAmount.text.toString()
+
+        // 2. Remove dots (Rp format) to get clean number string
+        val cleanAmount = rawAmount.replace(".", "")
+
+        if (cleanAmount.isEmpty()) {
+            binding.etAmount.error = "Mohon isi nominal"
+            return null
+        }
 
         return Transaction(
             id = "",
             type = if (binding.rbIncome.isChecked) "Income" else "Expense" ,
             category = binding.spinnerCategory.selectedItem.toString(),
-            amount = amount.toLong(),
+            amount = cleanAmount.toLong(), // 4. Convert the clean string to Long
             date = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
             timestamp = System.currentTimeMillis()
         )
     }
+
 
     private fun showDeleteConfirmation() {
         AlertDialog.Builder(this)
