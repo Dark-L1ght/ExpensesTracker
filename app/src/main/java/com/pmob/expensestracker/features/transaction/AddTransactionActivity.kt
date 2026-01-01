@@ -36,6 +36,10 @@ class AddTransactionActivity : AppCompatActivity() {
         binding = ActivityAddTransactionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val etAmount = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.et_amount)
+
+        etAmount.addTextChangedListener(NumberTextWatcher(etAmount))
+
         initFirebase()
         checkIntentData()
         setupListeners()

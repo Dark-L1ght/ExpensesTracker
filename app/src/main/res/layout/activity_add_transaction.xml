@@ -141,7 +141,8 @@
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusTopStart="12dp"
                         app:prefixText="Rp "
-                        app:prefixTextColor="#424242">
+                        app:prefixTextColor="#424242"
+                        app:expandedHintEnabled="false">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/et_amount"
