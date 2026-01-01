@@ -27,8 +27,8 @@ class AddTransactionActivity : AppCompatActivity() {
         "Tugas/Alat Tulis/Print", "Pulsa/Data/Netflix", "Hiburan/Self Reward", "Lainnya"
     )
     private val categoriesIncome = arrayOf(
-        "Kiriman Orang Tua", "Gaji Part-time", "Beasiswa",
-        "Project/Freelance", "Tabungan", "Lainnya"
+        "Kiriman Orang Tua", "Gaji", "Beasiswa",
+        "Project/Freelance", "Tabungan", "Investasi", "Lainnya"
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +43,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
     private fun initFirebase() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val databaseUrl = "https://expence-tra-4c82c-default-rtdb.asia-southeast1.firebasedatabase.app"
+        val databaseUrl = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
         dbRef = FirebaseDatabase.getInstance(databaseUrl).getReference("transactions").child(userId)
     }
 

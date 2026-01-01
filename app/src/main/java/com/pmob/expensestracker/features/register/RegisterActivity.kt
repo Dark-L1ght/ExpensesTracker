@@ -86,7 +86,7 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun saveUserDataToDatabase(uid: String, name: String, email: String, phone: String, birth: String, gender: String) {
-        val databaseUrl = "https://expence-tra-4c82c-default-rtdb.asia-southeast1.firebasedatabase.app"
+        val databaseUrl = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
         val dbRef = FirebaseDatabase.getInstance(databaseUrl).getReference("users")
 
         val userMap = mapOf(

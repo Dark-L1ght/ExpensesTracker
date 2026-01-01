@@ -42,7 +42,7 @@ class AllTransactionsActivity : AppCompatActivity() {
     private fun loadAllData() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val databaseUrl =
-            "https://expence-tra-4c82c-default-rtdb.asia-southeast1.firebasedatabase.app"
+            "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
         val dbRef =
             FirebaseDatabase.getInstance(databaseUrl).getReference("transactions").child(userId)
 

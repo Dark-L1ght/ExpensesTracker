@@ -47,7 +47,7 @@
                 android:layout_height="wrap_content"
                 android:hint="Nama Lengkap"
                 app:boxStrokeColor="#3F51B5"
-                app:startIconDrawable="@drawable/ic_others">
+                app:startIconDrawable="@drawable/ic_person">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_name"
@@ -63,7 +63,7 @@
                 android:layout_marginTop="16dp"
                 android:hint="Email"
                 app:boxStrokeColor="#3F51B5"
-                app:startIconDrawable="@drawable/ic_dataa">
+                app:startIconDrawable="@drawable/ic_email">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_email"
@@ -79,7 +79,7 @@
                 android:layout_marginTop="16dp"
                 android:hint="Nomor Telepon"
                 app:boxStrokeColor="#3F51B5"
-                app:startIconDrawable="@drawable/ic_home">
+                app:startIconDrawable="@drawable/ic_phone">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_phone"
@@ -95,7 +95,7 @@
                 android:layout_marginTop="16dp"
                 android:hint="Tanggal Lahir"
                 app:boxStrokeColor="#3F51B5"
-                app:startIconDrawable="@drawable/ic_task">
+                app:startIconDrawable="@drawable/ic_cake">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_birthdate"
@@ -112,7 +112,7 @@
                 android:layout_marginTop="16dp"
                 android:hint="Jenis Kelamin"
                 app:boxStrokeColor="#3F51B5"
-                app:startIconDrawable="@drawable/ic_others">
+                app:startIconDrawable="@drawable/ic_wc">
 
                 <AutoCompleteTextView
                     android:id="@+id/spinner_gender"
@@ -129,7 +129,7 @@
                 android:hint="Password"
                 app:boxStrokeColor="#3F51B5"
                 app:passwordToggleEnabled="true"
-                app:startIconDrawable="@drawable/ic_fun">
+                app:startIconDrawable="@drawable/ic_lock">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_password"
