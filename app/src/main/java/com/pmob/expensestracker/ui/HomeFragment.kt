@@ -32,9 +32,11 @@ class HomeFragment : Fragment() {
     private lateinit var transactionAdapter: TransactionAdapter
     private val transactionList = mutableListOf<Transaction>()
 
-    // Konstanta URL Database (Sebaiknya dipisah jika digunakan di banyak tempat)
-    private val DATABASE_URL = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
-    private val TAG = "HomeFragment"
+    // Konstanta ditempatkan di companion object agar bersifat statis dan hemat memori
+    companion object {
+        private const val DATABASE_URL = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
+        private const val TAG = "HomeFragment"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -99,6 +101,8 @@ class HomeFragment : Fragment() {
      */
     private fun observeTransactionData() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Menggunakan konstanta DATABASE_URL dari companion object
         val dbRef = FirebaseDatabase.getInstance(DATABASE_URL).getReference("transactions").child(userId)
 
         dbRef.addValueEventListener(object : ValueEventListener {
