@@ -8,11 +8,24 @@ import com.pmob.expensestracker.R
 import com.pmob.expensestracker.databinding.ItemTransactionBinding
 import com.pmob.expensestracker.model.Transaction
 
+/**
+ * TransactionAdapter
+ *
+ * Adapter RecyclerView yang bertugas untuk menampilkan daftar transaksi keuangan.
+ * Adapter ini menangani pengikatan data (binding) ke layout item_transaction
+ * serta menangani logika tampilan visual berdasarkan kategori dan tipe transaksi.
+ *
+ * @property transactionList Daftar data transaksi yang akan ditampilkan.
+ * @property onItemClick Fungsi callback untuk menangani interaksi klik pada item.
+ */
 class TransactionAdapter(
     private val transactionList: List<Transaction>,
-    private val onItemClick: (Transaction) -> Unit // TAMBAHKAN INI: Fungsi untuk menangani klik
+    private val onItemClick: (Transaction) -> Unit
 ) : RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder>() {
 
+    /**
+     * ViewHolder untuk memegang referensi view menggunakan ViewBinding.
+     */
     class TransactionViewHolder(val binding: ItemTransactionBinding) :
         RecyclerView.ViewHolder(binding.root)
 
@@ -26,43 +39,68 @@ class TransactionAdapter(
     }
 
     override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
-        val trx = transactionList[position]
+        val transaction = transactionList[position]
 
-        // 1. Set Data ke UI
-        holder.binding.tvCategory.text = trx.category
-        holder.binding.tvDate.text = trx.date
+        with(holder.binding) {
+            // Set data dasar
+            tvCategory.text = transaction.category
+            tvDate.text = transaction.date
 
-        val formattedAmount = String.format("%,d", trx.amount).replace(',', '.')
+            // Format uang (Contoh: 50000 -> 50.000)
+            val formattedAmount = String.format("%,d", transaction.amount).replace(',', '.')
 
-        // 2. Set Icon berdasarkan kategori
-        val iconRes = when (trx.category) {
+            // Panggil fungsi pembantu untuk mengatur ikon dan gaya visual
+            setupTransactionIcon(this, transaction.category)
+            setupTransactionStyle(this, transaction.type, formattedAmount)
+        }
+
+        // Listener untuk interaksi klik
+        holder.itemView.setOnClickListener {
+            onItemClick(transaction)
+        }
+    }
+
+    override fun getItemCount(): Int = transactionList.size
+
+    /**
+     * Mengatur ikon kategori berdasarkan jenis kategori transaksi.
+     */
+    private fun setupTransactionIcon(binding: ItemTransactionBinding, category: String) {
+        val iconRes = when (category) {
             "Makanan & Minuman" -> R.drawable.ic_food
             "Uang Kos/Kontrakan" -> R.drawable.ic_home
             "Transportasi/Bensin" -> R.drawable.ic_transport
             "Tugas/Alat Tulis/Print" -> R.drawable.ic_task
             "Pulsa/Data/Netflix" -> R.drawable.ic_dataa
             "Hiburan/Self Reward" -> R.drawable.ic_fun
-            "Kiriman Orang Tua", "Gaji Part-time", "Beasiswa", "Project/Freelance", "Tabungan" -> R.drawable.ic_income
+            "Kiriman Orang Tua",
+            "Gaji Part-time",
+            "Beasiswa",
+            "Project/Freelance",
+            "Tabungan" -> R.drawable.ic_income
             else -> R.drawable.ic_others
         }
-        holder.binding.ivCategoryIcon.setImageResource(iconRes)
-
-        // 3. Set Warna & Indikator (Expense/Income)
-        if (trx.type == "Expense") {
-            holder.binding.tvAmount.text = "- Rp $formattedAmount"
-            holder.binding.tvAmount.setTextColor(Color.parseColor("#E53935"))
-            holder.binding.viewTypeIndicator.setBackgroundColor(Color.parseColor("#E53935"))
-        } else {
-            holder.binding.tvAmount.text = "+ Rp $formattedAmount"
-            holder.binding.tvAmount.setTextColor(Color.parseColor("#2E7D32"))
-            holder.binding.viewTypeIndicator.setBackgroundColor(Color.parseColor("#2E7D32"))
-        }
-
-        // 4. LOGIKA KLIK: Mengirim data transaksi ke Activity tujuan
-        holder.itemView.setOnClickListener {
-            onItemClick(trx)
-        }
+        binding.ivCategoryIcon.setImageResource(iconRes)
     }
 
-    override fun getItemCount(): Int = transactionList.size
+    /**
+     * Mengatur warna teks dan indikator visual berdasarkan tipe transaksi (Expense vs Income).
+     */
+    private fun setupTransactionStyle(
+        binding: ItemTransactionBinding,
+        type: String,
+        amount: String
+    ) {
+        if (type.equals("Expense", ignoreCase = true)) {
+            // Gaya untuk Pengeluaran (Merah)
+            binding.tvAmount.text = "- Rp $amount"
+            binding.tvAmount.setTextColor(Color.parseColor("#E53935"))
+            binding.viewTypeIndicator.setBackgroundColor(Color.parseColor("#E53935"))
+        } else {
+            // Gaya untuk Pemasukan (Hijau)
+            binding.tvAmount.text = "+ Rp $amount"
+            binding.tvAmount.setTextColor(Color.parseColor("#2E7D32"))
+            binding.viewTypeIndicator.setBackgroundColor(Color.parseColor("#2E7D32"))
+        }
+    }
 }

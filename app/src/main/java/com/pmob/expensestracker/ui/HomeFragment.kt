@@ -1,8 +1,8 @@
 package com.pmob.expensestracker.ui
 
-import com.pmob.expensestracker.model.Transaction
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,14 +14,27 @@ import com.pmob.expensestracker.adapter.TransactionAdapter
 import com.pmob.expensestracker.databinding.FragmentHomeBinding
 import com.pmob.expensestracker.features.transaction.AddTransactionActivity
 import com.pmob.expensestracker.features.transaction.AllTransactionsActivity
+import com.pmob.expensestracker.model.Transaction
 
+/**
+ * HomeFragment
+ *
+ * Fragment utama yang berfungsi sebagai Dashboard Keuangan.
+ * Menampilkan ringkasan saldo, total pemasukan, pengeluaran,
+ * serta daftar transaksi terbaru secara real-time.
+ */
 class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
+    // Properti binding valid hanya di antara onCreateView dan onDestroyView
     private val binding get() = _binding!!
 
     private lateinit var transactionAdapter: TransactionAdapter
     private val transactionList = mutableListOf<Transaction>()
+
+    // Konstanta URL Database (Sebaiknya dipisah jika digunakan di banyak tempat)
+    private val DATABASE_URL = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
+    private val TAG = "HomeFragment"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,25 +47,44 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        binding.tvGreeting.text = "Halo, ${currentUser?.displayName ?: "User"}!"
-
-        binding.fabAdd.setOnClickListener {
-            startActivity(Intent(context, AddTransactionActivity::class.java))
-        }
-
-        binding.tvSeeAll.setOnClickListener {
-            startActivity(Intent(requireContext(), AllTransactionsActivity::class.java))
-        }
-
+        setupUserProfile()
+        setupClickListeners()
         setupRecyclerView()
-        loadDataFromFirebase()
+        observeTransactionData()
     }
 
+    /**
+     * Menampilkan sapaan berdasarkan nama user yang sedang login.
+     */
+    private fun setupUserProfile() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val userName = currentUser?.displayName ?: "User"
+        binding.tvGreeting.text = "Halo, $userName!"
+    }
+
+    /**
+     * Mengatur semua event klik tombol navigasi.
+     */
+    private fun setupClickListeners() {
+        // Tombol Tambah Transaksi (FAB)
+        binding.fabAdd.setOnClickListener {
+            navigateToActivity(AddTransactionActivity::class.java)
+        }
+
+        // Tombol Lihat Semua (See All)
+        binding.tvSeeAll.setOnClickListener {
+            navigateToActivity(AllTransactionsActivity::class.java)
+        }
+    }
+
+    /**
+     * Inisialisasi RecyclerView dan Adapter.
+     */
     private fun setupRecyclerView() {
+        // Lambda function menangani klik item di RecyclerView (Edit Transaksi)
         transactionAdapter = TransactionAdapter(transactionList) { trx ->
             val intent = Intent(requireContext(), AddTransactionActivity::class.java)
-            intent.putExtra("TRANSACTION_DATA", trx)
+            intent.putExtra("TRANSACTION_DATA", trx) // Mengirim objek Transaksi (Parcelable)
             startActivity(intent)
         }
 
@@ -62,52 +94,100 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun loadDataFromFirebase() {
+    /**
+     * Mengamati perubahan data transaksi dari Firebase Realtime Database.
+     */
+    private fun observeTransactionData() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val databaseUrl = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
-        val dbRef = FirebaseDatabase.getInstance(databaseUrl).getReference("transactions").child(userId)
+        val dbRef = FirebaseDatabase.getInstance(DATABASE_URL).getReference("transactions").child(userId)
 
         dbRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                transactionList.clear()
-                var income = 0L
-                var expense = 0L
+                // Mencegah update UI jika fragment tidak lagi aktif
+                if (!isAdded) return
 
-                // LOGIKA: Periksa apakah ada data di snapshot
-                if (snapshot.exists() && snapshot.childrenCount > 0) {
-                    binding.layoutEmpty.visibility = View.GONE
-                    binding.rvRecentTransaction.visibility = View.VISIBLE
-
-                    for (data in snapshot.children) {
-                        val trx = data.getValue(Transaction::class.java)
-                        trx?.let {
-                            transactionList.add(it)
-                            if (it.type == "Income") income += it.amount
-                            else expense += it.amount
-                        }
-                    }
-                    // Urutkan transaksi terbaru di atas
-                    transactionList.sortByDescending { it.timestamp }
-                } else {
-                    // Tampilkan pesan "No Entry Data" jika database kosong
-                    binding.layoutEmpty.visibility = View.VISIBLE
-                    binding.rvRecentTransaction.visibility = View.GONE
-                }
-
-                // Update UI Ringkasan Saldo
-                binding.tvTotalBalance.text = "Rp ${formatRupiah(income - expense)}"
-                binding.tvIncome.text = "Rp ${formatRupiah(income)}"
-                binding.tvExpense.text = "Rp ${formatRupiah(expense)}"
-
-                transactionAdapter.notifyDataSetChanged()
+                processTransactions(snapshot)
             }
 
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, "Database Error: ${error.message}")
+            }
         })
     }
 
-    // Fungsi pembantu untuk format ribuan
-    private fun formatRupiah(number: Long): String {
+    /**
+     * Memproses data snapshot dari Firebase:
+     * 1. Menghitung total Income/Expense.
+     * 2. Memperbarui List Transaksi.
+     * 3. Mengatur visibilitas Empty State.
+     */
+    private fun processTransactions(snapshot: DataSnapshot) {
+        transactionList.clear()
+        var totalIncome = 0L
+        var totalExpense = 0L
+
+        if (snapshot.exists() && snapshot.childrenCount > 0) {
+            // Tampilkan RecyclerView, Sembunyikan Layout Kosong
+            toggleEmptyState(isEmpty = false)
+
+            for (data in snapshot.children) {
+                val trx = data.getValue(Transaction::class.java)
+                trx?.let {
+                    transactionList.add(it)
+                    // Kalkulasi Saldo
+                    if (it.type == "Income") {
+                        totalIncome += it.amount
+                    } else {
+                        totalExpense += it.amount
+                    }
+                }
+            }
+            // Urutkan berdasarkan waktu (Terbaru di atas)
+            transactionList.sortByDescending { it.timestamp }
+        } else {
+            // Tampilkan Layout Kosong, Sembunyikan RecyclerView
+            toggleEmptyState(isEmpty = true)
+        }
+
+        // Update UI Dashboard & Adapter
+        updateDashboardUI(totalIncome, totalExpense)
+        transactionAdapter.notifyDataSetChanged()
+    }
+
+    /**
+     * Mengatur visibilitas tampilan saat data kosong vs ada data.
+     */
+    private fun toggleEmptyState(isEmpty: Boolean) {
+        if (isEmpty) {
+            binding.layoutEmpty.visibility = View.VISIBLE
+            binding.rvRecentTransaction.visibility = View.GONE
+        } else {
+            binding.layoutEmpty.visibility = View.GONE
+            binding.rvRecentTransaction.visibility = View.VISIBLE
+        }
+    }
+
+    /**
+     * Memperbarui teks ringkasan saldo pada Dashboard.
+     */
+    private fun updateDashboardUI(income: Long, expense: Long) {
+        val currentBalance = income - expense
+        binding.tvTotalBalance.text = "Rp ${formatCurrency(currentBalance)}"
+        binding.tvIncome.text = "Rp ${formatCurrency(income)}"
+        binding.tvExpense.text = "Rp ${formatCurrency(expense)}"
+    }
+
+    /**
+     * Fungsi utilitas untuk navigasi activity sederhana.
+     */
+    private fun navigateToActivity(targetActivity: Class<*>) {
+        startActivity(Intent(requireContext(), targetActivity))
+    }
+
+    /**
+     * Format angka ke format mata uang (Ribuan dipisah titik).
+     */
+    private fun formatCurrency(number: Long): String {
         return String.format("%,d", number).replace(',', '.')
     }
 
