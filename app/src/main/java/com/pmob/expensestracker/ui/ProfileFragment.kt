@@ -18,19 +18,52 @@ import com.pmob.expensestracker.R
 import com.pmob.expensestracker.databinding.FragmentProfileBinding
 import com.pmob.expensestracker.features.login.LoginActivity
 
+/**
+ * Fragment yang digunakan untuk menampilkan dan mengelola profil pengguna.
+ * Di dalam fragment ini user bisa melihat data profil, mengubah nama,
+ * reset password, dan logout dari aplikasi.
+ */
 class ProfileFragment : Fragment() {
+
+    /**
+     * Binding untuk menghubungkan layout FragmentProfile dengan kode Kotlin.
+     * Digunakan agar akses view lebih aman dan rapi.
+     */
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
+
+    /**
+     * Instance FirebaseAuth untuk mengelola autentikasi pengguna.
+     */
     private val auth = FirebaseAuth.getInstance()
 
-    private val databaseUrl = "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
+    /**
+     * URL Firebase Realtime Database yang digunakan aplikasi.
+     */
+    private val databaseUrl =
+        "https://pmobakhir-1279e-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+    /**
+     * Referensi database ke node "users" untuk menyimpan dan mengambil data user.
+     */
     private val dbRef = FirebaseDatabase.getInstance(databaseUrl).getReference("users")
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    /**
+     * Method untuk menghubungkan fragment dengan layout XML.
+     */
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    /**
+     * Method yang dipanggil setelah view berhasil dibuat.
+     * Digunakan untuk menampilkan data user dan mengatur aksi tombol.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -38,26 +71,23 @@ class ProfileFragment : Fragment() {
 
         binding.btnEditProfile.setOnClickListener { showEditNameDialog() }
         binding.btnResetPassword.setOnClickListener { sendResetPasswordEmail() }
-
-        // LOGIKA LOGOUT YANG DISESUAIKAN
-        binding.btnLogout.setOnClickListener {
-            performLogout()
-        }
+        binding.btnLogout.setOnClickListener { performLogout() }
     }
 
+    /**
+     * Method untuk melakukan logout dari Firebase dan akun Google.
+     * Setelah logout, user akan diarahkan ke halaman login.
+     */
     private fun performLogout() {
-        // 1. Logout dari Firebase
         auth.signOut()
 
-        // 2. Logout dari Google SDK (Agar akun tidak nyangkut)
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // Pastikan client ID benar atau gunakan string ID Anda
+            .requestIdToken(getString(R.string.default_web_client_id))
             .build()
 
         val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
 
         googleSignInClient.signOut().addOnCompleteListener {
-            // Setelah Google Sign Out berhasil, pindah ke LoginActivity
             val intent = Intent(requireContext(), LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
@@ -65,6 +95,10 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    /**
+     * Method untuk menampilkan data user seperti nama, email,
+     * dan foto profil berdasarkan gender.
+     */
     private fun displayUserData() {
         val user = auth.currentUser
         if (user != null) {
@@ -89,9 +123,13 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    /**
+     * Menampilkan dialog untuk mengubah nama profil pengguna.
+     */
     private fun showEditNameDialog() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Ubah Nama Profil")
+
         val input = EditText(requireContext())
         input.setText(auth.currentUser?.displayName)
         builder.setView(input)
@@ -104,9 +142,14 @@ class ProfileFragment : Fragment() {
         builder.show()
     }
 
+    /**
+     * Method untuk memperbarui nama profil user di Firebase Authentication
+     * dan Firebase Realtime Database.
+     */
     private fun updateProfileName(newName: String) {
         val user = auth.currentUser ?: return
-        val profileUpdates = UserProfileChangeRequest.Builder().setDisplayName(newName).build()
+        val profileUpdates =
+            UserProfileChangeRequest.Builder().setDisplayName(newName).build()
 
         user.updateProfile(profileUpdates).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -117,17 +160,28 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    /**
+     * Mengirim email reset password ke email user yang sedang login.
+     */
     private fun sendResetPasswordEmail() {
         val email = auth.currentUser?.email
         if (email != null) {
             auth.sendPasswordResetEmail(email).addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(context, "Link reset dikirim ke email", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        context,
+                        "Link reset dikirim ke email",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
     }
 
+    /**
+     * Membersihkan binding saat view dihancurkan
+     * untuk mencegah memory leak.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

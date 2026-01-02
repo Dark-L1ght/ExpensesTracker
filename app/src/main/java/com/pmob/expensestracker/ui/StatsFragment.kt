@@ -18,11 +18,23 @@ import com.pmob.expensestracker.adapter.TransactionAdapter
 import com.pmob.expensestracker.databinding.FragmentStatsBinding
 import com.pmob.expensestracker.model.Transaction
 
+/**
+ * Fragment yang digunakan untuk menampilkan statistik pengeluaran pengguna.
+ * Statistik ditampilkan dalam bentuk pie chart dan daftar transaksi
+ * berdasarkan kategori pengeluaran.
+ */
 class StatsFragment : Fragment() {
 
+    /**
+     * Binding untuk menghubungkan layout FragmentStats dengan kode Kotlin.
+     * Digunakan agar akses view lebih aman dan mudah.
+     */
     private var _binding: FragmentStatsBinding? = null
     private val binding get() = _binding!!
 
+    /**
+     * Method untuk menghubungkan fragment dengan layout XML.
+     */
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -32,11 +44,19 @@ class StatsFragment : Fragment() {
         return binding.root
     }
 
+    /**
+     * Dipanggil setelah view berhasil dibuat.
+     * Method ini akan langsung memuat data transaksi dari Firebase.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         loadTransactionData()
     }
 
+    /**
+     * Mengambil data transaksi user dari Firebase Realtime Database.
+     * Data akan dikelompokkan berdasarkan kategori pengeluaran.
+     */
     private fun loadTransactionData() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val databaseUrl =
@@ -48,6 +68,10 @@ class StatsFragment : Fragment() {
             .child(userId)
 
         dbRef.addValueEventListener(object : ValueEventListener {
+
+            /**
+             * Dipanggil saat data berhasil diambil atau terjadi perubahan data.
+             */
             override fun onDataChange(snapshot: DataSnapshot) {
                 val expenseMap = mutableMapOf<String, Long>()
                 val allExpenseList = mutableListOf<Transaction>()
@@ -70,10 +94,16 @@ class StatsFragment : Fragment() {
                 }
             }
 
+            /**
+             * Dipanggil jika terjadi error saat mengambil data dari Firebase.
+             */
             override fun onCancelled(error: DatabaseError) {}
         })
     }
 
+    /**
+     * Menyiapkan RecyclerView untuk menampilkan daftar pengeluaran terbesar.
+     */
     private fun setupRecyclerView(list: List<Transaction>) {
         binding.rvTopSpending.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -82,6 +112,9 @@ class StatsFragment : Fragment() {
         }
     }
 
+    /**
+     * Mengatur dan menampilkan Pie Chart berdasarkan data pengeluaran.
+     */
     private fun setupPieChart(expenseMap: Map<String, Long>) {
 
         val entries = ArrayList<PieEntry>()
@@ -96,7 +129,6 @@ class StatsFragment : Fragment() {
         ColorTemplate.VORDIPLOM_COLORS.forEach { colors.add(it) }
         dataSet.colors = colors
 
-        // LABEL & NOMINAL DI LUAR PIE
         dataSet.xValuePosition = PieDataSet.ValuePosition.OUTSIDE_SLICE
         dataSet.yValuePosition = PieDataSet.ValuePosition.OUTSIDE_SLICE
 
@@ -109,6 +141,9 @@ class StatsFragment : Fragment() {
         dataSet.valueTextColor = Color.BLACK
         dataSet.valueTypeface = android.graphics.Typeface.DEFAULT_BOLD
 
+        /**
+         * Formatter untuk menampilkan nilai pengeluaran dalam format Rupiah.
+         */
         dataSet.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
                 return "Rp ${String.format("%,.0f", value).replace(',', '.')}"
@@ -120,17 +155,14 @@ class StatsFragment : Fragment() {
         binding.pieChart.apply {
             this.data = data
 
-            // NAMA KATEGORI
             setDrawEntryLabels(true)
             setEntryLabelColor(Color.BLACK)
             setEntryLabelTextSize(12f)
 
             description.isEnabled = false
-
-            // HILANGKAN LEGEND (KETERANGAN WARNA & KATEGORI)
             legend.isEnabled = false
-
             isDrawHoleEnabled = true
+
             setHoleColor(Color.TRANSPARENT)
             holeRadius = 55f
             transparentCircleRadius = 60f
@@ -146,6 +178,9 @@ class StatsFragment : Fragment() {
         }
     }
 
+    /**
+     * Menampilkan kategori dengan pengeluaran terbesar pada UI.
+     */
     private fun updateTopSpendingUI(expenseMap: Map<String, Long>) {
         if (expenseMap.isNotEmpty()) {
             val topEntry = expenseMap.maxByOrNull { it.value }
@@ -158,6 +193,10 @@ class StatsFragment : Fragment() {
         }
     }
 
+    /**
+     * Membersihkan binding saat fragment dihancurkan
+     * untuk mencegah memory leak.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
