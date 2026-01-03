@@ -13,7 +13,6 @@ import com.google.firebase.database.*
 import com.pmob.expensestracker.adapter.TransactionAdapter
 import com.pmob.expensestracker.databinding.FragmentHomeBinding
 import com.pmob.expensestracker.features.transaction.AddTransactionActivity
-import com.pmob.expensestracker.features.transaction.AllTransactionsActivity
 import com.pmob.expensestracker.model.Transaction
 
 /**
@@ -71,11 +70,6 @@ class HomeFragment : Fragment() {
         // Tombol Tambah Transaksi (FAB)
         binding.fabAdd.setOnClickListener {
             navigateToActivity(AddTransactionActivity::class.java)
-        }
-
-        // Tombol Lihat Semua (See All)
-        binding.tvSeeAll.setOnClickListener {
-            navigateToActivity(AllTransactionsActivity::class.java)
         }
     }
 

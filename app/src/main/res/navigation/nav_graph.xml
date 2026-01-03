@@ -12,6 +12,12 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/navigation_transactions"
+        android:name="com.pmob.expensestracker.ui.AllTransactionsFragment"
+        android:label="Transaksi"
+        tools:layout="@layout/fragment_all_transactions" />
+
+    <fragment
         android:id="@+id/navigation_stats"
         android:name="com.pmob.expensestracker.ui.StatsFragment"
         android:label="Stats"
