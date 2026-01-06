@@ -2,5 +2,5 @@
 <paths>
     <external-files-path
         name="my_documents"
-        path="Documents" />
+        path="Documents/" />
 </paths>

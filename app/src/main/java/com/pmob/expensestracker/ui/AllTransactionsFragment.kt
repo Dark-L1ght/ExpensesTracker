@@ -3,15 +3,12 @@ package com.pmob.expensestracker.ui
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Bundle
 import android.os.Environment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -52,26 +49,24 @@ class AllTransactionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupToolbarMenu()
+        setupToolbar()
         setupRecyclerView()
         setupDateFilter()
         loadAllData()
     }
 
-    private fun setupToolbarMenu() {
+    private fun setupToolbar() {
         binding.toolbar.inflateMenu(R.menu.main_menu)
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_print_pdf -> {
-                    if (displayedTransactionList.isNotEmpty()) {
-                        generatePdf(displayedTransactionList)
-                    } else {
-                        Toast.makeText(requireContext(), "Tidak ada transaksi untuk dicetak", Toast.LENGTH_SHORT).show()
-                    }
-                    true
+            if (menuItem.itemId == R.id.action_print_pdf) {
+                if (displayedTransactionList.isNotEmpty()) {
+                    generatePdf(displayedTransactionList)
+                } else {
+                    Toast.makeText(requireContext(), "Tidak ada transaksi untuk dicetak", Toast.LENGTH_SHORT).show()
                 }
-                else -> false
+                return@setOnMenuItemClickListener true
             }
+            false
         }
     }
 
@@ -173,7 +168,7 @@ class AllTransactionsFragment : Fragment() {
                     { _, endYear, endMonth, endDayOfMonth ->
                         val endDate = Calendar.getInstance()
                         endDate.set(endYear, endMonth, endDayOfMonth)
-                        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                        val sdf = SimpleDateFormat("dd MMM yyyy", Locale("in", "ID"))
                         applyFilter(startDate, endDate, "${sdf.format(startDate.time)} - ${sdf.format(endDate.time)}")
                     },
                     calendar.get(Calendar.YEAR),
@@ -258,15 +253,187 @@ class AllTransactionsFragment : Fragment() {
     }
 
     private fun String.toDate(): Date {
-        return SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).parse(this) ?: Date()
+        return SimpleDateFormat("dd MMM yyyy", Locale("in", "ID")).parse(this) ?: Date()
     }
 
     private fun generatePdf(transactions: List<Transaction>) {
-        // Omitted for brevity
+        if (Environment.MEDIA_MOUNTED != Environment.getExternalStorageState()) {
+            Toast.makeText(requireContext(), "Penyimpanan eksternal tidak tersedia", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val pdfDocument = PdfDocument()
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
+        val page = pdfDocument.startPage(pageInfo)
+        val canvas = page.canvas
+        val paint = Paint()
+        val localeID = Locale("in", "ID")
+        val sdf = SimpleDateFormat("dd MMMM yyyy", localeID)
+
+        val leftMargin = 40f
+        val rightMargin = 555f
+        var yPosition = 40f
+
+        // --- HEADER ---
+        paint.textSize = 24f
+        paint.isFakeBoldText = true
+        paint.color = Color.BLACK
+        canvas.drawText("Laporan Transaksi", leftMargin, yPosition, paint)
+        yPosition += 25f
+
+        paint.textSize = 11f
+        paint.isFakeBoldText = false
+        paint.color = Color.DKGRAY
+        canvas.drawText("Dibuat pada: ${sdf.format(Date())}", leftMargin, yPosition, paint)
+        yPosition += 15f
+
+        val filterRange = binding.tvDateRangeFilter.text.toString()
+        if (filterRange.isNotEmpty() && filterRange != "Semua Transaksi") {
+            canvas.drawText("Periode: $filterRange", leftMargin, yPosition, paint)
+        }
+        yPosition += 40f
+
+        // --- TABLE HEADERS ---
+        paint.textSize = 12f
+        paint.isFakeBoldText = true
+        paint.color = Color.GRAY
+        val dateX = leftMargin
+        val categoryX = 130f
+        val typeX = 280f
+        val amountX = rightMargin
+
+        canvas.drawText("Tanggal", dateX, yPosition, paint)
+        canvas.drawText("Kategori", categoryX, yPosition, paint)
+        canvas.drawText("Jenis", typeX, yPosition, paint)
+        paint.textAlign = Paint.Align.RIGHT
+        canvas.drawText("Jumlah", amountX, yPosition, paint)
+        paint.textAlign = Paint.Align.LEFT
+        yPosition += 10f
+
+        paint.color = Color.LTGRAY
+        paint.strokeWidth = 1f
+        canvas.drawLine(leftMargin, yPosition, rightMargin, yPosition, paint)
+        yPosition += 25f
+
+        // --- TABLE CONTENT ---
+        paint.textSize = 12f
+        paint.isFakeBoldText = false
+        var totalIncome = 0.0
+        var totalExpense = 0.0
+
+        for (transaction in transactions) {
+            val isIncome = transaction.type == "Income"
+            paint.color = Color.BLACK
+
+            canvas.drawText(transaction.date, dateX, yPosition, paint)
+            canvas.drawText(transaction.category, categoryX, yPosition, paint)
+            canvas.drawText(if (isIncome) "Pemasukan" else "Pengeluaran", typeX, yPosition, paint)
+
+            val amount = transaction.amount.toDouble()
+            val amountString: String
+            paint.textAlign = Paint.Align.RIGHT
+
+            if (isIncome) {
+                paint.color = Color.rgb(26, 132, 78) // Professional Green
+                amountString = String.format(localeID, "+ Rp %,.0f", amount)
+                totalIncome += amount
+            } else {
+                paint.color = Color.rgb(208, 2, 27) // Professional Red
+                amountString = String.format(localeID, "- Rp %,.0f", amount)
+                totalExpense += amount
+            }
+
+            canvas.drawText(amountString, amountX, yPosition, paint)
+            paint.textAlign = Paint.Align.LEFT
+            yPosition += 20f
+        }
+        yPosition += 10f
+
+        // --- SUMMARY ---
+        paint.color = Color.LTGRAY
+        canvas.drawLine(300f, yPosition, rightMargin, yPosition, paint)
+        yPosition += 25f
+
+        paint.textSize = 13f
+        paint.color = Color.DKGRAY
+        paint.isFakeBoldText = false
+        val summaryLabelX = 300f
+
+        canvas.drawText("Total Pemasukan", summaryLabelX, yPosition, paint)
+        paint.textAlign = Paint.Align.RIGHT
+        paint.color = Color.rgb(26, 132, 78)
+        canvas.drawText(String.format(localeID, "Rp %,.0f", totalIncome), rightMargin, yPosition, paint)
+        paint.textAlign = Paint.Align.LEFT
+        yPosition += 25f
+
+        paint.color = Color.DKGRAY
+        canvas.drawText("Total Pengeluaran", summaryLabelX, yPosition, paint)
+        paint.textAlign = Paint.Align.RIGHT
+        paint.color = Color.rgb(208, 2, 27)
+        canvas.drawText(String.format(localeID, "Rp %,.0f", totalExpense), rightMargin, yPosition, paint)
+        paint.textAlign = Paint.Align.LEFT
+        yPosition += 25f
+
+        paint.color = Color.BLACK
+        paint.isFakeBoldText = true
+        canvas.drawText("Saldo Akhir", summaryLabelX, yPosition, paint)
+        paint.textAlign = Paint.Align.RIGHT
+        val finalBalance = totalIncome - totalExpense
+        if (finalBalance < 0) {
+            paint.color = Color.rgb(208, 2, 27)
+        } else {
+            paint.color = Color.BLACK
+        }
+        canvas.drawText(String.format(localeID, "Rp %,.0f", finalBalance), rightMargin, yPosition, paint)
+        paint.textAlign = Paint.Align.LEFT
+
+        // --- FOOTER ---
+        yPosition = 810f
+        paint.color = Color.GRAY
+        paint.textSize = 8f
+        paint.isFakeBoldText = false
+        paint.textAlign = Paint.Align.CENTER
+        canvas.drawText("Expenses Tracker - Halaman 1 dari 1", 595f / 2, yPosition, paint)
+
+        // --- SAVE DOCUMENT ---
+        pdfDocument.finishPage(page)
+
+        val fileName = "Laporan_Transaksi_${System.currentTimeMillis()}.pdf"
+        val documentsDir = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
+
+        if (documentsDir == null) {
+            Toast.makeText(requireContext(), "Tidak dapat mengakses direktori Dokumen", Toast.LENGTH_SHORT).show()
+            pdfDocument.close()
+            return
+        }
+        val file = File(documentsDir, fileName)
+
+        try {
+            FileOutputStream(file).use { fos ->
+                pdfDocument.writeTo(fos)
+            }
+            Toast.makeText(requireContext(), "PDF berhasil disimpan di Dokumen", Toast.LENGTH_LONG).show()
+            openPdf(file)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Gagal membuat PDF: ${e.message}", Toast.LENGTH_SHORT).show()
+        } finally {
+            pdfDocument.close()
+        }
     }
 
     private fun openPdf(file: File) {
-        // Omitted for brevity
+        val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", file)
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(uri, "application/pdf")
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+
+        try {
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(requireContext(), "Tidak ada aplikasi untuk membuka PDF", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {
